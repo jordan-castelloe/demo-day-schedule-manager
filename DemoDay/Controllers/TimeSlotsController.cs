@@ -324,15 +324,30 @@ namespace DemoDay.Controllers
                                                  InterviewSchedule = gi.OrderBy(i => i.TimeSlot.StartTime).ToList()
                                              }).ToList();
 
+            var newInterviewsGroupedByTimeSlot = (from i in newInterviews
+                                                  orderby i.TimeSlot.StartTime
+                                                  group i by i.TimeSlot into gi
+                                                  select new CompanyList()
+                                                  {
+                                                      TimeSlot = gi.ToList()[0].TimeSlot,
+                                                      InterviewSchedule = gi.OrderBy(i => i.TimeSlot.StartTime).ToList()
+                                                  }).ToList();
 
 
 
+            switch (sortBy)
+            {
+                case "student":
+                    return View(newInterviewsGroupedByStudent);
+                case "company":
+                    return View(newInterviewsGroupedByCompany);
+                case "timeSlot":
+                    return View(newInterviewsGroupedByTimeSlot);
+                default:
+                    return View(newInterviewsGroupedByTimeSlot);
+            };
 
-            // Deal with IBM leaving early
-
-
-
-            return (sortBy == "student" ? View(newInterviewsGroupedByStudent) : View(newInterviewsGroupedByCompany));
+           
 
 
             // Take the top six students and try to schedule them in interview blocks

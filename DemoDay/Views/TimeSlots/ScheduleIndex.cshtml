@@ -7,27 +7,47 @@
 <h2>Schedule</h2>
 <a class="btn btn-secondary" asp-action="ScheduleIndex" asp-controller="TimeSlots" asp-route-sortBy="student">View Student Schedule</a>
 <a class="btn btn-secondary" asp-action="ScheduleIndex" asp-controller="TimeSlots" asp-route-sortBy="company">View Company Schedule</a>
+<a class="btn btn-secondary" asp-action="ScheduleIndex" asp-controller="TimeSlots" asp-route-sortBy="timeSlot">View Master Schedule</a>
 
 <div>
-    @foreach(var item in Model){
-        if(item.Company != null){
-    <h4>@Html.DisplayFor(m => item.Company.Name)</h4>
-    @foreach(var interview in item.InterviewSchedule){
-    <h5>@Html.DisplayFor(m => interview.Ranking.Student.FirstName)</h5>
-    <p>Ranking: @Html.DisplayFor(m => interview.Ranking.Rank)</p>
-    <p>@Html.DisplayFor(m => interview.TimeSlot.StartTime) - @Html.DisplayFor(m => interview.TimeSlot.EndTime)</p>
+    @foreach (var item in Model)
+    {
+        if (item.Company != null)
+        {
+            <h4>@Html.DisplayFor(m => item.Company.Name)</h4>
+            @foreach (var interview in item.InterviewSchedule)
+            {
+                <h5>@Html.DisplayFor(m => interview.Ranking.Student.FirstName)</h5>
+                <p>Ranking: @Html.DisplayFor(m => interview.Ranking.Rank)</p>
+                <p>@Html.DisplayFor(m => interview.TimeSlot.StartTime) - @Html.DisplayFor(m => interview.TimeSlot.EndTime)</p>
+
+            }
 
         }
+        else if (item.Student != null)
+        {
+            <h4>@Html.DisplayFor(m => item.Student.FirstName)</h4>
+            @foreach (var interview in item.InterviewSchedule)
+            {
+                <h5>@Html.DisplayFor(m => interview.Ranking.Company.Name)</h5>
+                <p>Ranking: @Html.DisplayFor(m => interview.Ranking.Rank)</p>
+                <p>@Html.DisplayFor(m => interview.TimeSlot.StartTime) - @Html.DisplayFor(m => interview.TimeSlot.EndTime)</p>
 
-        } else {
-    <h4>@Html.DisplayFor(m => item.Student.FirstName)</h4>
-    @foreach(var interview in item.InterviewSchedule){
-    <h5>@Html.DisplayFor(m => interview.Ranking.Company.Name)</h5>
-    <p>Ranking: @Html.DisplayFor(m => interview.Ranking.Rank)</p>
-    <p>@Html.DisplayFor(m => interview.TimeSlot.StartTime) - @Html.DisplayFor(m => interview.TimeSlot.EndTime)</p>
 
 
+            }
+        }
+        else
+        {
+            <h4>@Html.DisplayFor(m => item.TimeSlot.StartTime) - @Html.DisplayFor(m => item.TimeSlot.EndTime)</h4>
+            @foreach (var interview in item.InterviewSchedule)
+            {
+                <p>@Html.DisplayFor(m => interview.Ranking.Student.FirstName) + @Html.DisplayFor(m => interview.Ranking.Company.Name)</p>
+                <p>Ranking: @Html.DisplayFor(m => interview.Ranking.Rank)</p>
+
+            }
+
+        }
     }
-    }}
 </div>
 
