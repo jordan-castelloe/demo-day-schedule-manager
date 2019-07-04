@@ -9,6 +9,10 @@ namespace DemoDay.Models.ReportItems
     {
         public Company Company { get; set; }
 
+        public Student Student { get; set; }
+
         public List<Ranking> PriorityRankings { get; set; } = new List<Ranking>();
+
+        public List<Interview> InterviewSchedule { get; set; } = new List<Interview>();
     }
 }

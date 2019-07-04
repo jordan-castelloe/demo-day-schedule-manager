@@ -27,14 +27,7 @@ namespace DemoDay.Controllers
             var occupiedTimeSlotsForStudent = scheduledInterviewsForStudent.Select(i => i.TimeSlot);
             var openTimeSlotsForStudent = _context.TimeSlot.Where(ti => !occupiedTimeSlotsForStudent.Contains(ti));
 
-            if (openTimeSlotsForStudent.Contains(time))
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            return openTimeSlotsForStudent.Contains(time);
 
         }
 
@@ -44,21 +37,35 @@ namespace DemoDay.Controllers
             var occupiedTimeSlotsForCompany = scheduledInterviewsForCompany.Select(i => i.TimeSlot);
             var openTimeSlotsForCompany = _context.TimeSlot.Where(ti => !occupiedTimeSlotsForCompany.Contains(ti));
 
-            if (openTimeSlotsForCompany.Contains(time))
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            return openTimeSlotsForCompany.Contains(time);
 
         }
 
-        private async Task<List<Interview>> BuildSchedule()
+        // Returns true if an interview is already scheduled between a student and a company
+        // Returns false if no interview has been scheduled
+        private bool AlreadyScheduled(Student student, Company company)
         {
+            var studentsInterviews = _context.Interview
+                .Include(i => i.Ranking)
+                    .ThenInclude(r => r.Company)
+                .Where(i => i.Ranking.StudentId == student.Id)
+                .ToList();
 
-            List<Interview> InterviewList = new List<Interview>();
+            var studentCompanies = studentsInterviews.Select(i => i.Ranking.Company);
+
+            return studentCompanies.Contains(company); 
+        }
+
+        public async Task<IActionResult> ScheduleIndex(string sortBy)
+        {
+            // Wipe out the original interviews, we're going to generate new ones
+            _context.Interview.RemoveRange(_context.Interview);
+
+            await _context.SaveChangesAsync();
+
+            // delete this later, this is just for testing
+            var allInterviews = await _context.Interview.ToListAsync();
+
             // Todo: change cohort dynamically
             var rankings = await _context.Ranking
                 .Include(r => r.Student)
@@ -90,17 +97,21 @@ namespace DemoDay.Controllers
                     // Find the first time when they're both available
                     if (r.Rank == 1)
                     {
-                        var avaialbleSlot = allTimeSlots.FirstOrDefault(time => CompanyIsAvailable(r.Company, time) && StudentIsAvailable(r.Student, time));
+                        var openSlot = allTimeSlots.FirstOrDefault(time => CompanyIsAvailable(r.Company, time) && StudentIsAvailable(r.Student, time));
 
-                        var interview = new Interview()
+                        if (openSlot != null)
                         {
-                            TimeSlotId = avaialbleSlot.Id,
-                            TimeSlot = avaialbleSlot,
-                            RankingId = r.Id,
-                            Ranking = r
-                        };
+                            var interview = new Interview()
+                            {
+                                TimeSlotId = openSlot.Id,
+                                TimeSlot = openSlot,
+                                RankingId = r.Id,
+                                Ranking = r
+                            };
+                            _context.Add(interview);
+                            _context.SaveChanges();
 
-                        InterviewList.Add(interview);
+                        }
                     }
 
                 });
@@ -112,17 +123,22 @@ namespace DemoDay.Controllers
                     // Find the first time when they're both available
                     if (r.Rank == 2)
                     {
-                        var avaialbleSlot = allTimeSlots.FirstOrDefault(time => CompanyIsAvailable(r.Company, time) && StudentIsAvailable(r.Student, time));
+                        var openSlot = allTimeSlots.FirstOrDefault(time => CompanyIsAvailable(r.Company, time) && StudentIsAvailable(r.Student, time));
 
-                        var interview = new Interview()
+                        if (openSlot != null)
                         {
-                            TimeSlotId = avaialbleSlot.Id,
-                            TimeSlot = avaialbleSlot,
-                            RankingId = r.Id,
-                            Ranking = r
-                        };
+                            var interview = new Interview()
+                            {
+                                TimeSlotId = openSlot.Id,
+                                TimeSlot = openSlot,
+                                RankingId = r.Id,
+                                Ranking = r
+                            };
+                            _context.Add(interview);
+                            _context.SaveChanges();
 
-                        InterviewList.Add(interview);
+                        }
+
                     }
 
                 });
@@ -134,17 +150,23 @@ namespace DemoDay.Controllers
                     // Find the first time when they're both available
                     if (r.Rank == 3)
                     {
-                        var avaialbleSlot = allTimeSlots.FirstOrDefault(time => CompanyIsAvailable(r.Company, time) && StudentIsAvailable(r.Student, time));
+                        var openSlot = allTimeSlots.FirstOrDefault(time => CompanyIsAvailable(r.Company, time) && StudentIsAvailable(r.Student, time));
 
-                        var interview = new Interview()
+
+                        if (openSlot != null)
                         {
-                            TimeSlotId = avaialbleSlot.Id,
-                            TimeSlot = avaialbleSlot,
-                            RankingId = r.Id,
-                            Ranking = r
-                        };
+                            var interview = new Interview()
+                            {
+                                TimeSlotId = openSlot.Id,
+                                TimeSlot = openSlot,
+                                RankingId = r.Id,
+                                Ranking = r
+                            };
+                            _context.Add(interview);
+                            _context.SaveChanges();
 
-                        InterviewList.Add(interview);
+                        }
+
                     }
 
                 });
@@ -156,17 +178,21 @@ namespace DemoDay.Controllers
                     // Find the first time when they're both available
                     if (r.Rank == 4)
                     {
-                        var avaialbleSlot = allTimeSlots.FirstOrDefault(time => CompanyIsAvailable(r.Company, time) && StudentIsAvailable(r.Student, time));
+                        var openSlot = allTimeSlots.FirstOrDefault(time => CompanyIsAvailable(r.Company, time) && StudentIsAvailable(r.Student, time));
 
-                        var interview = new Interview()
+                        if (openSlot != null)
                         {
-                            TimeSlotId = avaialbleSlot.Id,
-                            TimeSlot = avaialbleSlot,
-                            RankingId = r.Id,
-                            Ranking = r
-                        };
+                            var interview = new Interview()
+                            {
+                                TimeSlotId = openSlot.Id,
+                                TimeSlot = openSlot,
+                                RankingId = r.Id,
+                                Ranking = r
+                            };
+                            _context.Add(interview);
+                            _context.SaveChanges();
 
-                        InterviewList.Add(interview);
+                        }
                     }
 
                 });
@@ -178,37 +204,142 @@ namespace DemoDay.Controllers
                     // Find the first time when they're both available
                     if (r.Rank == 5)
                     {
-                        var avaialbleSlot = allTimeSlots.FirstOrDefault(time => CompanyIsAvailable(r.Company, time) && StudentIsAvailable(r.Student, time));
+                        var openSlot = allTimeSlots.FirstOrDefault(time => CompanyIsAvailable(r.Company, time) && StudentIsAvailable(r.Student, time));
 
-                        var interview = new Interview()
+                        if (openSlot != null)
                         {
-                            TimeSlotId = avaialbleSlot.Id,
-                            TimeSlot = avaialbleSlot,
-                            RankingId = r.Id,
-                            Ranking = r
-                        };
+                            var interview = new Interview()
+                            {
+                                TimeSlotId = openSlot.Id,
+                                TimeSlot = openSlot,
+                                RankingId = r.Id,
+                                Ranking = r
+                            };
+                            _context.Add(interview);
+                            _context.SaveChanges();
 
-                        InterviewList.Add(interview);
+                        }
                     }
 
                 });
 
             });
 
-           ;
+            var newInterviews = await _context.Interview
+               .Include(i => i.TimeSlot)
+               .Include(i => i.Ranking)
+                   .ThenInclude(r => r.Student)
+               .Include(i => i.Ranking)
+                   .ThenInclude(r => r.Company)
+               .ToListAsync();
+
+            var newInterviewsGroupedByCompany = (from i in newInterviews
+                                                 group i by i.Ranking.Company.Name into gi
+                                                 select new CompanyList()
+                                                 {
+                                                     Company = gi.ToList()[0].Ranking.Company,
+                                                     InterviewSchedule = gi.OrderBy(i => i.TimeSlot.StartTime).ToList()
+                                                 }).ToList();
+
+            var newInterviewsGroupedByStudent = (from i in newInterviews
+                                                 group i by i.Ranking.Student.FirstName into gi
+                                                 select new CompanyList()
+                                                 {
+                                                     Student = gi.ToList()[0].Ranking.Student,
+                                                     InterviewSchedule = gi.OrderBy(i => i.TimeSlot.StartTime).ToList()
+                                                 }).ToList();
+
+            // Check and make sure that students have five interviews
+
+            // Check and make sure that companies have four interviews
+
+            var allStudents = _context.Student.ToList();
+
+            newInterviewsGroupedByCompany.ForEach(c =>
+            {
+                if (c.InterviewSchedule.Count() < 5)
+                {
+                    
+                    // Loop through all the time slots
+                    _context.TimeSlot.ToList().ForEach(time =>
+                    {
+                        // If the company is available in that time slot
+                        if (CompanyIsAvailable(c.Company, time))
+                        {
+                            // Get the first available student
+                            // Add a check to make sure the student doesn't already have an interview with that company
+                            var firstAvailableStudent = allStudents.FirstOrDefault(s => StudentIsAvailable(s, time) && !AlreadyScheduled(s, c.Company));
+
+                            // Create a new ranking with a rank of 0
+                            var ranking = new Ranking()
+                            {
+                                Company = c.Company,
+                                CompanyId = c.Company.Id,
+                                Student = firstAvailableStudent,
+                                StudentId = firstAvailableStudent.Id,
+                                Rank = 0
+                            };
+                            _context.Add(ranking);
+
+                            // Create a new interview
+                            var interview = new Interview()
+                            {
+                                TimeSlotId = time.Id,
+                                TimeSlot = time,
+                                RankingId = ranking.Id,
+                                Ranking = ranking
+                            };
+                            _context.Add(interview);
+                            _context.SaveChanges();
+                        }
+
+                    });
+                }
+            });
+
+            newInterviews = await _context.Interview
+               .Include(i => i.TimeSlot)
+               .Include(i => i.Ranking)
+                   .ThenInclude(r => r.Student)
+               .Include(i => i.Ranking)
+                   .ThenInclude(r => r.Company)
+               .ToListAsync();
+
+            newInterviewsGroupedByCompany = (from i in newInterviews
+                                             group i by i.Ranking.Company.Name into gi
+                                             select new CompanyList()
+                                             {
+                                                 Company = gi.ToList()[0].Ranking.Company,
+                                                 InterviewSchedule = gi.OrderBy(i => i.TimeSlot.StartTime).ToList()
+                                             }).ToList();
+
+            newInterviewsGroupedByStudent = (from i in newInterviews
+                                             group i by i.Ranking.Student.FirstName into gi
+                                             select new CompanyList()
+                                             {
+                                                 Student = gi.ToList()[0].Ranking.Student,
+                                                 InterviewSchedule = gi.OrderBy(i => i.TimeSlot.StartTime).ToList()
+                                             }).ToList();
+
+
+
+
+
+            // Deal with IBM leaving early
+
+
+
+            return (sortBy == "student" ? View(newInterviewsGroupedByStudent) : View(newInterviewsGroupedByCompany));
+
 
             // Take the top six students and try to schedule them in interview blocks
             // But ONLY if the student doesn't have any interviews currently in the interview table with that timeslot id
 
             // If a company has less than six interviews or a student has less than six interviews, match them up
-            return InterviewList;
+
         }
 
-        public async Task<IActionResult> ScheduleIndex()
-        {
-            var schedule = await BuildSchedule();
-            return View(schedule);
-        }
+
         // GET: TimeSlots
         public async Task<IActionResult> Index()
         {

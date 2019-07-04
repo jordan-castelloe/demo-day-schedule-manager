@@ -1,6 +1,33 @@
-﻿
+﻿@model IEnumerable<DemoDay.Models.ReportItems.CompanyList>
 <h1>Schedule Manager</h1>
 
 <a class="btn btn-primary" asp-action="Index" asp-controller="TimeSlots">Manage Time Slots</a>
-<a class="btn btn-primary" asp-action="ScheduleIndex" asp-controller="TimeSlots">Generate New Schedule</a>
+
+
+<h2>Schedule</h2>
+<a class="btn btn-secondary" asp-action="ScheduleIndex" asp-controller="TimeSlots" asp-route-sortBy="student">View Student Schedule</a>
+<a class="btn btn-secondary" asp-action="ScheduleIndex" asp-controller="TimeSlots" asp-route-sortBy="company">View Company Schedule</a>
+
+<div>
+    @foreach(var item in Model){
+        if(item.Company != null){
+    <h4>@Html.DisplayFor(m => item.Company.Name)</h4>
+    @foreach(var interview in item.InterviewSchedule){
+    <h5>@Html.DisplayFor(m => interview.Ranking.Student.FirstName)</h5>
+    <p>Ranking: @Html.DisplayFor(m => interview.Ranking.Rank)</p>
+    <p>@Html.DisplayFor(m => interview.TimeSlot.StartTime) - @Html.DisplayFor(m => interview.TimeSlot.EndTime)</p>
+
+        }
+
+        } else {
+    <h4>@Html.DisplayFor(m => item.Student.FirstName)</h4>
+    @foreach(var interview in item.InterviewSchedule){
+    <h5>@Html.DisplayFor(m => interview.Ranking.Company.Name)</h5>
+    <p>Ranking: @Html.DisplayFor(m => interview.Ranking.Rank)</p>
+    <p>@Html.DisplayFor(m => interview.TimeSlot.StartTime) - @Html.DisplayFor(m => interview.TimeSlot.EndTime)</p>
+
+
+    }
+    }}
+</div>
 
