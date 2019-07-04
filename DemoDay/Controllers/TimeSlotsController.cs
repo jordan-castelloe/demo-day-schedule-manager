@@ -24,11 +24,17 @@ namespace DemoDay.Controllers
         {
 
             var scheduledInterviewsForStudent = _context.Interview.Where(i => i.Ranking.StudentId == student.Id).Include(i => i.TimeSlot).ToList();
-            var occupiedTimeSlotsForStudent = scheduledInterviewsForStudent.Select(i => i.TimeSlot);
-            var openTimeSlotsForStudent = _context.TimeSlot.Where(ti => !occupiedTimeSlotsForStudent.Contains(ti));
 
-            return openTimeSlotsForStudent.Contains(time);
+            // Don't schedule more than five time slots per student
+            if(scheduledInterviewsForStudent.Count() < 5)
+            {
+                var occupiedTimeSlotsForStudent = scheduledInterviewsForStudent.Select(i => i.TimeSlot);
+                var openTimeSlotsForStudent = _context.TimeSlot.Where(ti => !occupiedTimeSlotsForStudent.Contains(ti));
 
+                return openTimeSlotsForStudent.Contains(time);
+
+            }
+            return false;
         }
 
         private bool CompanyIsAvailable(Company company, TimeSlot time)
@@ -273,27 +279,33 @@ namespace DemoDay.Controllers
                             // Add a check to make sure the student doesn't already have an interview with that company
                             var firstAvailableStudent = allStudents.FirstOrDefault(s => StudentIsAvailable(s, time) && !AlreadyScheduled(s, c.Company));
 
-                            // Create a new ranking with a rank of 0
-                            var ranking = new Ranking()
+                            if(firstAvailableStudent != null)
                             {
-                                Company = c.Company,
-                                CompanyId = c.Company.Id,
-                                Student = firstAvailableStudent,
-                                StudentId = firstAvailableStudent.Id,
-                                Rank = 0
-                            };
-                            _context.Add(ranking);
 
-                            // Create a new interview
-                            var interview = new Interview()
-                            {
-                                TimeSlotId = time.Id,
-                                TimeSlot = time,
-                                RankingId = ranking.Id,
-                                Ranking = ranking
-                            };
-                            _context.Add(interview);
-                            _context.SaveChanges();
+                                // Create a new ranking with a rank of 0
+                                var ranking = new Ranking()
+                                {
+                                    Company = c.Company,
+                                    CompanyId = c.Company.Id,
+                                    Student = firstAvailableStudent,
+                                    StudentId = firstAvailableStudent.Id,
+                                    Rank = 0
+                                };
+                                _context.Add(ranking);
+
+                                // Create a new interview
+                                var interview = new Interview()
+                                {
+                                    TimeSlotId = time.Id,
+                                    TimeSlot = time,
+                                    RankingId = ranking.Id,
+                                    Ranking = ranking
+                                };
+                                _context.Add(interview);
+                                _context.SaveChanges();
+
+                            }
+
                         }
 
                     });
