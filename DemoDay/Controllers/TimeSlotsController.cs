@@ -35,7 +35,10 @@ namespace DemoDay.Controllers
         {
             var scheduledInterviewsForCompany = _context.Interview.Where(i => i.Ranking.CompanyId == company.Id).Include(i => i.TimeSlot).ToList();
             var occupiedTimeSlotsForCompany = scheduledInterviewsForCompany.Select(i => i.TimeSlot);
-            var openTimeSlotsForCompany = _context.TimeSlot.Where(ti => !occupiedTimeSlotsForCompany.Contains(ti));
+            var availableTimeSlots = _context.CompanyAvailability.Where(c => c.CompanyId == company.Id).Select(ci => ci.TimeSlot).ToList();
+
+            // Find the time slots when a) a company is generally available and b) they don't already have an interview scheduled
+            var openTimeSlotsForCompany = _context.TimeSlot.Where(ti => !occupiedTimeSlotsForCompany.Contains(ti) && availableTimeSlots.Contains(ti));
 
             return openTimeSlotsForCompany.Contains(time);
 
@@ -343,7 +346,7 @@ namespace DemoDay.Controllers
         // GET: TimeSlots
         public async Task<IActionResult> Index()
         {
-            return View(await _context.TimeSlot.ToListAsync());
+            return View(await _context.TimeSlot.OrderBy(t => t.StartTime).ToListAsync());
         }
 
         // GET: TimeSlots/Details/5
@@ -380,6 +383,22 @@ namespace DemoDay.Controllers
             if (ModelState.IsValid)
             {
                 _context.Add(timeSlot);
+                await _context.SaveChangesAsync();
+                
+                // Make all companies available at this time by default
+                var allCompanies = await _context.Company.ToListAsync();
+
+
+                allCompanies.ForEach(company =>
+                {
+                    var newAvailability = new CompanyAvailability()
+                    {
+                        CompanyId = company.Id,
+                        TimeSlotId = timeSlot.Id
+                    };
+                    _context.Add(newAvailability);
+                });
+
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
