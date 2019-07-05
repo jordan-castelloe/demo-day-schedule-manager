@@ -11,6 +11,10 @@ namespace DemoDay.Models
 
         public string Name { get; set; }
 
+        public bool isLocal { get; set; }
+
+        public bool requiresBachelorsDegree { get; set; }
+
 
     }
 }

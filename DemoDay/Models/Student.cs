@@ -17,5 +17,9 @@ namespace DemoDay.Models
         public int CohortId { get; set; }
 
         public Cohort Cohort { get; set; }
+
+        public bool canRelocate { get; set; }
+
+        public bool hasBachelorsDegree { get; set; }
     }
 }

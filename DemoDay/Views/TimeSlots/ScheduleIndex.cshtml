@@ -12,12 +12,15 @@
 <div>
     @foreach (var item in Model)
     {
+        var numberOfInterviews = item.InterviewSchedule.Count();
         if (item.Company != null)
         {
             <h4>@Html.DisplayFor(m => item.Company.Name)</h4>
+            <p>Number of Interviews: @numberOfInterviews</p>
             @foreach (var interview in item.InterviewSchedule)
             {
                 <h5>@Html.DisplayFor(m => interview.Ranking.Student.FirstName)</h5>
+
                 <p>Ranking: @Html.DisplayFor(m => interview.Ranking.Rank)</p>
                 <p>@Html.DisplayFor(m => interview.TimeSlot.StartTime) - @Html.DisplayFor(m => interview.TimeSlot.EndTime)</p>
 
@@ -26,7 +29,7 @@
         }
         else if (item.Student != null)
         {
-            var numberOfInterviews = item.InterviewSchedule.Count();
+
             <h4>@Html.DisplayFor(m => item.Student.FirstName)</h4>
             <p>Number of Interviews: @numberOfInterviews</p>
             @foreach (var interview in item.InterviewSchedule)
