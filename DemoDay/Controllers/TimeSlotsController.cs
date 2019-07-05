@@ -318,12 +318,7 @@ namespace DemoDay.Controllers
                                                       InterviewSchedule = gi.OrderBy(i => i.TimeSlot.StartTime).ToList()
                                                   }).ToList();
 
-            var allInterviewsPrinterFriendly = new List<CompanyList>();
-
-            allInterviewsPrinterFriendly
-                .Concat(newInterviewsGroupedByCompany)
-                .Concat(newInterviewsGroupedByStudent)
-                .Concat(newInterviewsGroupedByTimeSlot);
+            
 
             switch (sortBy)
             {
@@ -333,8 +328,6 @@ namespace DemoDay.Controllers
                     return View(newInterviewsGroupedByCompany);
                 case "timeSlot":
                     return View(newInterviewsGroupedByTimeSlot);
-                case "printerFriendly":
-                    return View(allInterviewsPrinterFriendly);
                 default:
                     return View(newInterviewsGroupedByTimeSlot);
             };
