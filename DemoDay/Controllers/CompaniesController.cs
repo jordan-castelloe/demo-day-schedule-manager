@@ -59,7 +59,7 @@ namespace DemoDay.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Name")] Company company)
+        public async Task<IActionResult> Create([Bind("Id,Name, requiresBachelorsDegree, isLocal")] Company company)
         {
             if (ModelState.IsValid)
             {
