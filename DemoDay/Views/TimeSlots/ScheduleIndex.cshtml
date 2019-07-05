@@ -7,6 +7,8 @@
 <a class="btn btn-success" asp-action="ScheduleIndex" asp-controller="TimeSlots" asp-route-sortBy="company">View Company Schedule</a>
 <a class="btn btn-success" asp-action="ScheduleIndex" asp-controller="TimeSlots" asp-route-sortBy="timeSlot">View Master Schedule</a>
 
+
+
 <div class="container">
     <div class="row">
         @foreach (var item in Model)
@@ -61,24 +63,24 @@
             }
             else
             {
-    <div class="card card col-sm-5 m-2">
+                <div class="card card col-sm-5 m-2">
 
-        @{var startTime = item.TimeSlot.StartTime.ToShortTimeString();}
-        @{var endTime = item.TimeSlot.EndTime.ToShortTimeString();}
-        <h4 class="text-lg-center card-header">@Html.DisplayFor(m => startTime) - @Html.DisplayFor(m => endTime)</h4>
+                    @{var startTime = item.TimeSlot.StartTime.ToShortTimeString();}
+                    @{var endTime = item.TimeSlot.EndTime.ToShortTimeString();}
+                    <h4 class="text-lg-center card-header">@Html.DisplayFor(m => startTime) - @Html.DisplayFor(m => endTime)</h4>
 
-        <div class="card-body">
-            @foreach (var interview in item.InterviewSchedule)
-            {
+                    <div class="card-body">
+                        @foreach (var interview in item.InterviewSchedule)
+                        {
 
-                <p class="font-weight-bold text-success">@Html.DisplayFor(m => interview.Ranking.Student.FirstName) + @Html.DisplayFor(m => interview.Ranking.Company.Name)</p>
-                <p class="font-weight-light">Ranking: @Html.DisplayFor(m => interview.Ranking.Rank)</p>
+                            <p class="font-weight-bold text-success">@Html.DisplayFor(m => interview.Ranking.Student.FirstName) + @Html.DisplayFor(m => interview.Ranking.Company.Name)</p>
+                            <p class="font-weight-light">Ranking: @Html.DisplayFor(m => interview.Ranking.Rank)</p>
 
-            }
+                        }
 
-        </div>
+                    </div>
 
-    </div>
+                </div>
 
 
 
