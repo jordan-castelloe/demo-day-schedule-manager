@@ -318,7 +318,7 @@ namespace DemoDay.Controllers
                                                       InterviewSchedule = gi.OrderBy(i => i.TimeSlot.StartTime).ToList()
                                                   }).ToList();
 
-
+            
 
             switch (sortBy)
             {
