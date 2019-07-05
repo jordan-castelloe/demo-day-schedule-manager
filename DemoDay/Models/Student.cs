@@ -17,5 +17,11 @@ namespace DemoDay.Models
         public int CohortId { get; set; }
 
         public Cohort Cohort { get; set; }
+
+        [Display(Name ="Can this student relocate outside of Huntington or Charleston?")]
+        public bool canRelocate { get; set; }
+
+        [Display(Name ="Does this student have a bachelors degree?")]
+        public bool hasBachelorsDegree { get; set; }
     }
 }

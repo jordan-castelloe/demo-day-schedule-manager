@@ -24,5 +24,8 @@ namespace DemoDay.Data
         public DbSet<Student> Student { get; set; }
 
         public DbSet<TimeSlot> TimeSlot { get; set; }
+
+        public DbSet<CompanyAvailability> CompanyAvailability { get; set; }
+
     }
 }

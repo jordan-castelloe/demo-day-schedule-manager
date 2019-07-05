@@ -23,8 +23,19 @@
                 <span asp-validation-for="LastName" class="text-danger"></span>
             </div>
             <div class="form-group">
+                <label asp-for="canRelocate" class="control-label"></label>
+                <input asp-for="canRelocate" class="form-control" />
+                <span asp-validation-for="canRelocate" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="hasBachelorsDegree" class="control-label"></label>
+                <input asp-for="hasBachelorsDegree" class="form-control" />
+                <span asp-validation-for="hasBachelorsDegree" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
                 <label asp-for="CohortId" class="control-label"></label>
-                <select asp-for="CohortId" class ="form-control" asp-items="ViewBag.CohortId"></select>
+                <select asp-for="CohortId" class="form-control" asp-items="ViewBag.CohortId"></select>
             </div>
             <div class="form-group">
                 <input type="submit" value="Create" class="btn btn-primary" />

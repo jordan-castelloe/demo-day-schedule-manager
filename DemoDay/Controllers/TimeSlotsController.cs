@@ -24,18 +24,27 @@ namespace DemoDay.Controllers
         {
 
             var scheduledInterviewsForStudent = _context.Interview.Where(i => i.Ranking.StudentId == student.Id).Include(i => i.TimeSlot).ToList();
-            var occupiedTimeSlotsForStudent = scheduledInterviewsForStudent.Select(i => i.TimeSlot);
-            var openTimeSlotsForStudent = _context.TimeSlot.Where(ti => !occupiedTimeSlotsForStudent.Contains(ti));
 
-            return openTimeSlotsForStudent.Contains(time);
+            // Don't schedule more than five time slots per student
+            if (scheduledInterviewsForStudent.Count() < 5)
+            {
+                var occupiedTimeSlotsForStudent = scheduledInterviewsForStudent.Select(i => i.TimeSlot);
+                var openTimeSlotsForStudent = _context.TimeSlot.Where(ti => !occupiedTimeSlotsForStudent.Contains(ti));
 
+                return openTimeSlotsForStudent.Contains(time);
+
+            }
+            return false;
         }
 
         private bool CompanyIsAvailable(Company company, TimeSlot time)
         {
             var scheduledInterviewsForCompany = _context.Interview.Where(i => i.Ranking.CompanyId == company.Id).Include(i => i.TimeSlot).ToList();
             var occupiedTimeSlotsForCompany = scheduledInterviewsForCompany.Select(i => i.TimeSlot);
-            var openTimeSlotsForCompany = _context.TimeSlot.Where(ti => !occupiedTimeSlotsForCompany.Contains(ti));
+            var availableTimeSlots = _context.CompanyAvailability.Where(c => c.CompanyId == company.Id).Select(ci => ci.TimeSlot).ToList();
+
+            // Find the time slots when a) a company is generally available and b) they don't already have an interview scheduled
+            var openTimeSlotsForCompany = _context.TimeSlot.Where(ti => !occupiedTimeSlotsForCompany.Contains(ti) && availableTimeSlots.Contains(ti));
 
             return openTimeSlotsForCompany.Contains(time);
 
@@ -53,7 +62,52 @@ namespace DemoDay.Controllers
 
             var studentCompanies = studentsInterviews.Select(i => i.Ranking.Company);
 
-            return studentCompanies.Contains(company); 
+            return studentCompanies.Contains(company);
+        }
+
+        private bool isLocationCompatible(Student student, Company company)
+        {
+            if (!company.isLocal)
+            {
+                return student.canRelocate;
+            }
+
+            return true;
+        }
+
+        private bool meetsRequirements(Student student, Company company)
+        {
+            if (company.requiresBachelorsDegree)
+            {
+                return student.hasBachelorsDegree;
+            }
+
+            return true;
+        }
+
+        private void scheduleInterview(Ranking rank, List<TimeSlot> allTimeSlots)
+        {
+           
+            
+            if (meetsRequirements(rank.Student, rank.Company) && !AlreadyScheduled(rank.Student, rank.Company))
+            {
+                var openSlot = allTimeSlots.FirstOrDefault(time => CompanyIsAvailable(rank.Company, time) && StudentIsAvailable(rank.Student, time));
+
+                if (openSlot != null)
+                {
+                    var interview = new Interview()
+                    {
+                        TimeSlotId = openSlot.Id,
+                        TimeSlot = openSlot,
+                        RankingId = rank.Id,
+                        Ranking = rank
+                    };
+                    _context.Add(interview);
+                    _context.SaveChanges();
+
+                }
+
+            }
         }
 
         public async Task<IActionResult> ScheduleIndex(string sortBy)
@@ -80,10 +134,10 @@ namespace DemoDay.Controllers
                                    {
                                        Company = gr.ToList()[0].Company,
                                        PriorityRankings = gr.OrderBy(r => r.Rank).ToList()
-                                   }).ToList();
+                                   }).OrderByDescending(cl => cl.Company.Name).ToList();
+
 
             var allTimeSlots = await _context.TimeSlot.ToListAsync();
-
             groupedRankings.ForEach(gr =>
             {
                 // TODO: make async? 
@@ -94,50 +148,18 @@ namespace DemoDay.Controllers
                 // Loop through students who priortized that company first and, in order, try to assign them to an interview
                 gr.PriorityRankings.ForEach(r =>
                 {
-                    // Find the first time when they're both available
                     if (r.Rank == 1)
                     {
-                        var openSlot = allTimeSlots.FirstOrDefault(time => CompanyIsAvailable(r.Company, time) && StudentIsAvailable(r.Student, time));
-
-                        if (openSlot != null)
-                        {
-                            var interview = new Interview()
-                            {
-                                TimeSlotId = openSlot.Id,
-                                TimeSlot = openSlot,
-                                RankingId = r.Id,
-                                Ranking = r
-                            };
-                            _context.Add(interview);
-                            _context.SaveChanges();
-
-                        }
+                        scheduleInterview(r, allTimeSlots);
                     }
 
                 });
-
-
-                // Loop through students who priortized that company first and, in order, try to assign them to an interview
                 gr.PriorityRankings.ForEach(r =>
                 {
                     // Find the first time when they're both available
                     if (r.Rank == 2)
                     {
-                        var openSlot = allTimeSlots.FirstOrDefault(time => CompanyIsAvailable(r.Company, time) && StudentIsAvailable(r.Student, time));
-
-                        if (openSlot != null)
-                        {
-                            var interview = new Interview()
-                            {
-                                TimeSlotId = openSlot.Id,
-                                TimeSlot = openSlot,
-                                RankingId = r.Id,
-                                Ranking = r
-                            };
-                            _context.Add(interview);
-                            _context.SaveChanges();
-
-                        }
+                        scheduleInterview(r, allTimeSlots);
 
                     }
 
@@ -150,22 +172,7 @@ namespace DemoDay.Controllers
                     // Find the first time when they're both available
                     if (r.Rank == 3)
                     {
-                        var openSlot = allTimeSlots.FirstOrDefault(time => CompanyIsAvailable(r.Company, time) && StudentIsAvailable(r.Student, time));
-
-
-                        if (openSlot != null)
-                        {
-                            var interview = new Interview()
-                            {
-                                TimeSlotId = openSlot.Id,
-                                TimeSlot = openSlot,
-                                RankingId = r.Id,
-                                Ranking = r
-                            };
-                            _context.Add(interview);
-                            _context.SaveChanges();
-
-                        }
+                        scheduleInterview(r, allTimeSlots);
 
                     }
 
@@ -178,21 +185,7 @@ namespace DemoDay.Controllers
                     // Find the first time when they're both available
                     if (r.Rank == 4)
                     {
-                        var openSlot = allTimeSlots.FirstOrDefault(time => CompanyIsAvailable(r.Company, time) && StudentIsAvailable(r.Student, time));
-
-                        if (openSlot != null)
-                        {
-                            var interview = new Interview()
-                            {
-                                TimeSlotId = openSlot.Id,
-                                TimeSlot = openSlot,
-                                RankingId = r.Id,
-                                Ranking = r
-                            };
-                            _context.Add(interview);
-                            _context.SaveChanges();
-
-                        }
+                        scheduleInterview(r, allTimeSlots);
                     }
 
                 });
@@ -204,26 +197,14 @@ namespace DemoDay.Controllers
                     // Find the first time when they're both available
                     if (r.Rank == 5)
                     {
-                        var openSlot = allTimeSlots.FirstOrDefault(time => CompanyIsAvailable(r.Company, time) && StudentIsAvailable(r.Student, time));
-
-                        if (openSlot != null)
-                        {
-                            var interview = new Interview()
-                            {
-                                TimeSlotId = openSlot.Id,
-                                TimeSlot = openSlot,
-                                RankingId = r.Id,
-                                Ranking = r
-                            };
-                            _context.Add(interview);
-                            _context.SaveChanges();
-
-                        }
+                        scheduleInterview(r, allTimeSlots);
                     }
 
                 });
 
             });
+
+
 
             var newInterviews = await _context.Interview
                .Include(i => i.TimeSlot)
@@ -239,7 +220,7 @@ namespace DemoDay.Controllers
                                                  {
                                                      Company = gi.ToList()[0].Ranking.Company,
                                                      InterviewSchedule = gi.OrderBy(i => i.TimeSlot.StartTime).ToList()
-                                                 }).ToList();
+                                                 }).OrderBy(cl => cl.InterviewSchedule.Count()).ToList();
 
             var newInterviewsGroupedByStudent = (from i in newInterviews
                                                  group i by i.Ranking.Student.FirstName into gi
@@ -247,50 +228,56 @@ namespace DemoDay.Controllers
                                                  {
                                                      Student = gi.ToList()[0].Ranking.Student,
                                                      InterviewSchedule = gi.OrderBy(i => i.TimeSlot.StartTime).ToList()
-                                                 }).ToList();
+                                                 }).OrderBy(sl => sl.InterviewSchedule.Count()).ThenBy(sl => sl.Student.FirstName).ToList();
 
-            // Check and make sure that students have five interviews
 
-            // Check and make sure that companies have four interviews
-
-            var allStudents = _context.Student.ToList();
+            
 
             newInterviewsGroupedByCompany.ForEach(c =>
             {
                 if (c.InterviewSchedule.Count() < 5)
                 {
-                    
+
                     // Loop through all the time slots
                     _context.TimeSlot.ToList().ForEach(time =>
                     {
                         // If the company is available in that time slot
                         if (CompanyIsAvailable(c.Company, time))
                         {
-                            // Get the first available student
-                            // Add a check to make sure the student doesn't already have an interview with that company
-                            var firstAvailableStudent = allStudents.FirstOrDefault(s => StudentIsAvailable(s, time) && !AlreadyScheduled(s, c.Company));
+                            
 
-                            // Create a new ranking with a rank of 0
-                            var ranking = new Ranking()
+                            var firstAvailableStudent = newInterviewsGroupedByStudent.FirstOrDefault(s =>
+                            StudentIsAvailable(s.Student, time) &&
+                            !AlreadyScheduled(s.Student, c.Company) &&
+                            meetsRequirements(s.Student, c.Company) &&
+                            isLocationCompatible(s.Student, c.Company));
+                            if (firstAvailableStudent != null)
                             {
-                                Company = c.Company,
-                                CompanyId = c.Company.Id,
-                                Student = firstAvailableStudent,
-                                StudentId = firstAvailableStudent.Id,
-                                Rank = 0
-                            };
-                            _context.Add(ranking);
 
-                            // Create a new interview
-                            var interview = new Interview()
-                            {
-                                TimeSlotId = time.Id,
-                                TimeSlot = time,
-                                RankingId = ranking.Id,
-                                Ranking = ranking
-                            };
-                            _context.Add(interview);
-                            _context.SaveChanges();
+                                // Create a new ranking with a rank of 0
+                                var ranking = new Ranking()
+                                {
+                                    Company = c.Company,
+                                    CompanyId = c.Company.Id,
+                                    Student = firstAvailableStudent.Student,
+                                    StudentId = firstAvailableStudent.Student.Id,
+                                    Rank = 0
+                                };
+                                _context.Add(ranking);
+
+                                // Create a new interview
+                                var interview = new Interview()
+                                {
+                                    TimeSlotId = time.Id,
+                                    TimeSlot = time,
+                                    RankingId = ranking.Id,
+                                    Ranking = ranking
+                                };
+                                _context.Add(interview);
+                                _context.SaveChanges();
+
+                            }
+
                         }
 
                     });
@@ -305,6 +292,7 @@ namespace DemoDay.Controllers
                    .ThenInclude(r => r.Company)
                .ToListAsync();
 
+          
             newInterviewsGroupedByCompany = (from i in newInterviews
                                              group i by i.Ranking.Company.Name into gi
                                              select new CompanyList()
@@ -321,29 +309,35 @@ namespace DemoDay.Controllers
                                                  InterviewSchedule = gi.OrderBy(i => i.TimeSlot.StartTime).ToList()
                                              }).ToList();
 
+            var newInterviewsGroupedByTimeSlot = (from i in newInterviews
+                                                  orderby i.TimeSlot.StartTime
+                                                  group i by i.TimeSlot into gi
+                                                  select new CompanyList()
+                                                  {
+                                                      TimeSlot = gi.ToList()[0].TimeSlot,
+                                                      InterviewSchedule = gi.OrderBy(i => i.TimeSlot.StartTime).ToList()
+                                                  }).ToList();
 
 
 
-
-            // Deal with IBM leaving early
-
-
-
-            return (sortBy == "student" ? View(newInterviewsGroupedByStudent) : View(newInterviewsGroupedByCompany));
-
-
-            // Take the top six students and try to schedule them in interview blocks
-            // But ONLY if the student doesn't have any interviews currently in the interview table with that timeslot id
-
-            // If a company has less than six interviews or a student has less than six interviews, match them up
-
+            switch (sortBy)
+            {
+                case "student":
+                    return View(newInterviewsGroupedByStudent);
+                case "company":
+                    return View(newInterviewsGroupedByCompany);
+                case "timeSlot":
+                    return View(newInterviewsGroupedByTimeSlot);
+                default:
+                    return View(newInterviewsGroupedByTimeSlot);
+            };
         }
 
 
         // GET: TimeSlots
         public async Task<IActionResult> Index()
         {
-            return View(await _context.TimeSlot.ToListAsync());
+            return View(await _context.TimeSlot.OrderBy(t => t.StartTime).ToListAsync());
         }
 
         // GET: TimeSlots/Details/5
@@ -380,6 +374,22 @@ namespace DemoDay.Controllers
             if (ModelState.IsValid)
             {
                 _context.Add(timeSlot);
+                await _context.SaveChangesAsync();
+
+                // Make all companies available at this time by default
+                var allCompanies = await _context.Company.ToListAsync();
+
+
+                allCompanies.ForEach(company =>
+                {
+                    var newAvailability = new CompanyAvailability()
+                    {
+                        CompanyId = company.Id,
+                        TimeSlotId = timeSlot.Id
+                    };
+                    _context.Add(newAvailability);
+                });
+
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }

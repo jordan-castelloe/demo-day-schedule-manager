@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using DemoDay.Data;
 using DemoDay.Models;
+using DemoDay.Models.ViewModels;
 
 namespace DemoDay.Controllers
 {
@@ -22,7 +23,11 @@ namespace DemoDay.Controllers
         // GET: Companies
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Company.ToListAsync());
+            
+            var allCompanies = await _context.Company.ToListAsync();
+
+         
+            return View(allCompanies);
         }
 
         // GET: Companies/Details/5
@@ -54,11 +59,26 @@ namespace DemoDay.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Name")] Company company)
+        public async Task<IActionResult> Create([Bind("Id,Name, requiresBachelorsDegree, isLocal")] Company company)
         {
             if (ModelState.IsValid)
             {
                 _context.Add(company);
+                await _context.SaveChangesAsync();
+                // Make companies available all the time by default
+                var allTimeSlots = await _context.TimeSlot.ToListAsync();
+               
+                
+                allTimeSlots.ForEach(time =>
+                {
+                    var newAvailability = new CompanyAvailability()
+                    {
+                        CompanyId = company.Id,
+                        TimeSlotId = time.Id
+                    };
+                    _context.Add(newAvailability);
+                });
+
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
@@ -73,12 +93,22 @@ namespace DemoDay.Controllers
                 return NotFound();
             }
 
-            var company = await _context.Company.FindAsync(id);
-            if (company == null)
+            var availableTimes = _context.CompanyAvailability.Where(c => c.CompanyId == id).Select(c => c.TimeSlot).ToList();
+
+            var vm = new CompanyEditViewModel()
             {
-                return NotFound();
-            }
-            return View(company);
+                Company = await _context.Company.FindAsync(id),
+                TimeSlots = await _context.TimeSlot.OrderBy(t => t.StartTime).Select(time => new SelectListItem()
+                {
+                    Text = $"{time.StartTime.ToString("hh:mm tt")} - {time.EndTime.ToString("hh:mm tt")}",
+                    Value = time.Id.ToString(),
+                    Selected = availableTimes.Contains(time)
+
+                }).ToListAsync()
+
+            };
+
+            return View(vm);
         }
 
         // POST: Companies/Edit/5
@@ -86,34 +116,25 @@ namespace DemoDay.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Name")] Company company)
+        public async Task<IActionResult> Edit(int id, CompanyEditViewModel vm)
         {
-            if (id != company.Id)
-            {
-                return NotFound();
-            }
+            _context.Update(vm.Company);
+            // Wipe out their previous availabilities 
+            _context.RemoveRange(_context.CompanyAvailability.Where(c => c.CompanyId == id));
 
-            if (ModelState.IsValid)
+            // Build new availabilities based on what they selected
+            var newAvailabilities = vm.TimeSlotIds.Select(t => new CompanyAvailability()
             {
-                try
-                {
-                    _context.Update(company);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!CompanyExists(company.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            return View(company);
+                CompanyId = id,
+                TimeSlotId = t
+            }).ToList();
+
+            _context.CompanyAvailability.AddRange(newAvailabilities);
+            await _context.SaveChangesAsync();
+
+
+            return RedirectToAction("Index");
+
         }
 
         // GET: Companies/Delete/5

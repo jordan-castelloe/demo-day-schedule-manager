@@ -1,4 +1,4 @@
-﻿@model DemoDay.Models.Company
+﻿@model DemoDay.Models.ViewModels.CompanyEditViewModel
 
 @{
     ViewData["Title"] = "Edit";
@@ -12,12 +12,30 @@
     <div class="col-md-4">
         <form asp-action="Edit">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="Company.Id" />
             <div class="form-group">
-                <label asp-for="Name" class="control-label"></label>
-                <input asp-for="Name" class="form-control" />
-                <span asp-validation-for="Name" class="text-danger"></span>
+                <label asp-for="Company.Name" class="control-label"></label>
+                <input asp-for="Company.Name" class="form-control" />
+                <span asp-validation-for="Company.Name" class="text-danger"></span>
             </div>
+            <div class="form-group">
+                <label asp-for="Company.isLocal" class="control-label"></label>
+                <input asp-for="Company.isLocal" class="form-control" />
+                <span asp-validation-for="Company.isLocal" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Company.requiresBachelorsDegree" class="control-label"></label>
+                <input asp-for="Company.requiresBachelorsDegree" class="form-control" />
+                <span asp-validation-for="Company.requiresBachelorsDegree" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label class="control-label">Select time slots when @Model.Company.Name is available</label>
+                <select asp-for="@Model.TimeSlotIds" class="form-control"
+                        asp-items="@Model.TimeSlots"></select>
+
+            </div>
+
             <div class="form-group">
                 <input type="submit" value="Save" class="btn btn-primary" />
             </div>
